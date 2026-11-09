@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-notifications-deployment
+  labels:
+    app: ms-notifications
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ms-notifications
+  template:
+    metadata:
+      labels:
+        app: ms-notifications
+    spec:
+      containers:
+        - name: ms-notifications
+          image: ms-notifications:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: PORT
+              value: "8000"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq-service"
+            - name: RABBITMQ_QUEUE
+              value: "pedidos_events"
+            - name: MONGO_URI
+              value: "mongodb://mongo-notification-service:27017/notifications_db"
+            - name: MONGO_DB_NAME
+              value: "notifications_db"
+            - name: RABBITMQ_EXCHANGE
+              value: "app_events_exchange"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2

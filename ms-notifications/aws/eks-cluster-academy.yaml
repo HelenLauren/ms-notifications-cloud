@@ -1,0 +1,44 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: ms-notifications-cluster
+  region: us-east-1
+  version: "1.30"
+  tags:
+    Project: ms-notifications
+    Institution: PUCPR
+    Owner: helen.bonato@pucpr.edu.br
+    Environment: academy-lab
+
+# Zonas de disponibilidade recomendadas para us-east-1 no AWS Academy
+availabilityZones:
+  - us-east-1a
+  - us-east-1b
+
+# Role do Control Plane do EKS (Restrição AWS Academy)
+# Observação: No AWS Academy Learner Lab padrão, costuma ser a role 'LabRole':
+# Exemplo: arn:aws:iam::<SEU_ACCOUNT_ID>:role/LabRole
+iam:
+  serviceRoleARN: "arn:aws:iam::802953070814:role/c222296a5607975l18126590t1w802953-LabEksClusterRole-6CIM2DYn3dHR"
+
+managedNodeGroups:
+  - name: ms-notifications-nodes
+    # Instância t3.medium: equilíbrio ideal de 2 vCPUs e 4GB RAM para comportar
+    # os Pods do sistema EKS + MongoDB + RabbitMQ + 3 réplicas do ms-notifications
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 3
+    volumeSize: 20
+    volumeType: gp3
+    labels:
+      role: worker
+      app: ms-notifications
+    tags:
+      nodegroup-role: ms-notifications-worker
+    # Role das instâncias EC2 gerenciadas (Worker Nodes)
+    # No AWS Academy Learner Lab padrão, também costuma ser a role 'LabRole':
+    iam:
+      instanceRoleARN: "arn:aws:iam::802953070814:role/c222296a5607975l18126590t1w802953070-LabEksNodeRole-MJ50nTAkT4K0"
+
